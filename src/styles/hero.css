@@ -1,0 +1,119 @@
+.hero-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 50;
+    box-sizing: border-box;
+}
+
+.hero-description-wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 32px;
+    max-width: 440px;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.hero-description {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    color: #111;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0;
+    user-select: none;
+}
+
+.contact-description-wrapper {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 32px;
+    pointer-events: auto;
+    box-sizing: border-box;
+}
+
+.contact-description {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    cursor: pointer;
+    background-color: #111;
+    border-radius: 4px;
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.contact-description:hover {
+    background-color: #222;
+    transform: translateY(-2px);
+}
+
+.contact-description h3 {
+    margin: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    user-select: none;
+}
+
+.number_vehicle {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1%;
+    position: fixed;
+    top: 30%;
+    left: 35%;
+    
+    z-index: 20;
+    background-color: #B1B1B1;
+}
+
+.number_vehicle h3 {
+    color: #fff;
+    font-size: medium;
+    font-family: "JetBrains Mono", monospace;
+
+}
+
+.descripcion_vehicle {
+    min-width: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: fixed;
+    bottom: 19%;
+    right: 30%;
+    z-index: 20;
+}
+
+.descripcion_vehicle p {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    letter-spacing: 0.04em;
+    color: #111;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin: 0;
+    user-select: none;
+}
+
+.descripcion_vehicle span {
+    color: #686868;
+    font-size: 9px;
+}
