@@ -23,7 +23,7 @@ export const VEHICLES_DATA: VehicleData[] = [
         version:'vv',
         motor:'dd',
         imagePath: '/models/vehicles/2007audi_tt.png',
-        modelPath: '/models/vehicles/2007audi_tt.glb',
+        modelPath: '/models/vehicles/2007audi_tt_optimi.glb',
     },
     {
         id: '2014audi_r8',

@@ -43,6 +43,7 @@ export class DragExperience {
 
     //Number vehicle
     private onVehicleChange: ((index: number) => void) | null = null;
+    private onVehicleSelected: ((id: string) => void) | null = null;
 
     // Listeners de eventos
     private boundOnPointerDown: (e: PointerEvent) => void;
@@ -94,6 +95,10 @@ export class DragExperience {
     //number vehicle
     public setOnVehicleChange(callback: (index: number) => void): void {
         this.onVehicleChange = callback;
+    }
+
+    public setOnVehicleSelected(callback: (id: string) => void): void {
+        this.onVehicleSelected = callback;
     }
 
     private onPointerDown(e: PointerEvent): void {
@@ -188,6 +193,11 @@ private snapToNearestVehicle(): void {
     private async onCardSelected(card: VehicleCard2D): Promise<void> {
         const state = this.stateManager.getState();
         if (state !== 'overview') return;
+
+        if (this.onVehicleSelected) {
+            this.onVehicleSelected(card.getData().id);
+            return;
+        }
 
         this.selectedCard = card;
         this.stateManager.setState('transitioning');

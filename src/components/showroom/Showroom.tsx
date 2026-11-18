@@ -4,9 +4,10 @@ import '../../styles/vehicle-tooltip.css';
 
 interface ShowroomProps {
     onVehicleChange: (index: number) => void;
+    onVehicleSelected?: (id: string) => void;
 }
 
-export function Showroom({ onVehicleChange }: ShowroomProps) {
+export function Showroom({ onVehicleChange, onVehicleSelected }: ShowroomProps) {
     const sectionRef = useRef<HTMLElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +20,10 @@ export function Showroom({ onVehicleChange }: ShowroomProps) {
 
         const engine = new ShowroomEngine(container);
 
-engine.setOnVehicleChange(onVehicleChange);
+        engine.setOnVehicleChange(onVehicleChange);
+        if (onVehicleSelected) {
+            engine.setOnVehicleSelected(onVehicleSelected);
+        }
 
         engine.start();
 
@@ -38,7 +42,7 @@ engine.setOnVehicleChange(onVehicleChange);
         return () => {
             engine.dispose();
         };
-    }, [onVehicleChange]);
+    }, [onVehicleChange, onVehicleSelected]);
 
     return (
         <section

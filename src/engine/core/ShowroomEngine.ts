@@ -29,6 +29,7 @@ export class ShowroomEngine {
     private isRunning = false;
 
     private onVehicleChange: ((index: number) => void) | null = null;
+    private onVehicleSelected: ((id: string) => void) | null = null;
 
     constructor(container: HTMLElement) {
         this.container = container;
@@ -106,10 +107,7 @@ export class ShowroomEngine {
             await this.renderer.init();
         }
 
-        await this.hdriEnvironment.load('/textures/studio/fondo.exr')
-            .catch((error) => {
-                console.error('Error cargando el HDRI:', error);
-            });
+      
     }
 
     // Inicializa la carga de los planos 2D optimizados
@@ -119,8 +117,12 @@ export class ShowroomEngine {
 
     //number vehicle
     public setOnVehicleChange(callback: (index: number) => void): void {
-    this.onVehicleChange = callback;
-}
+        this.onVehicleChange = callback;
+    }
+
+    public setOnVehicleSelected(callback: (id: string) => void): void {
+        this.onVehicleSelected = callback;
+    }
 
     // Iniciar experiencia controlada por cursor drag
     public startExperience(): void {
@@ -153,6 +155,10 @@ export class ShowroomEngine {
 
 if (this.onVehicleChange) {
     this.dragExperience.setOnVehicleChange(this.onVehicleChange);
+}
+
+if (this.onVehicleSelected) {
+    this.dragExperience.setOnVehicleSelected(this.onVehicleSelected);
 }
 
 this.dragExperience.start();

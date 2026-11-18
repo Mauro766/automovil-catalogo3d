@@ -52,8 +52,16 @@ export class VehicleManager {
 
     // Carga bajo demanda del modelo 3D GLB solo para el auto seleccionado
     public async load3DForCard(card: VehicleCard2D): Promise<Vehicle> {
+        return this.load3D(card.getData(), card);
+    }
+
+    public async load3DForData(data: VehicleData): Promise<Vehicle> {
+        return this.load3D(data);
+    }
+
+    private async load3D(data: VehicleData, card?: VehicleCard2D): Promise<Vehicle> {
         // Si ya hay un modelo 3D activo para este mismo auto, reutilizarlo
-        if (this.active3DVehicle && this.activeData?.id === card.getData().id) {
+        if (this.active3DVehicle && this.activeData?.id === data.id) {
             this.active3DVehicle.setVisible(true);
             return this.active3DVehicle;
         }
@@ -61,14 +69,15 @@ export class VehicleManager {
         // Liberar cualquier otro modelo 3D previo para ahorrar memoria
         this.unloadActive3D();
 
-        const data = card.getData();
         const vehicle = new Vehicle();
         const model = await vehicle.load(data.modelPath);
 
-        // Ubicar el modelo 3D exactamente en la posición y orientación de la tarjeta 2D
-        const cardPos = card.getWorldPosition();
-        model.position.set(cardPos.x, 0, cardPos.z);
-        model.lookAt(0, 0, 0);
+        if (card) {
+            // Ubicar el modelo 3D exactamente en la posición y orientación de la tarjeta 2D
+            const cardPos = card.getWorldPosition();
+            model.position.set(cardPos.x, 0, cardPos.z);
+            model.lookAt(0, 0, 0);
+        }
 
         this.scene.add(model);
         this.active3DVehicle = vehicle;
