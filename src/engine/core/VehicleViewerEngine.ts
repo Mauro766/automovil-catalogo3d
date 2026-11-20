@@ -74,7 +74,7 @@ export class VehicleViewerEngine {
         }
         if (this.isDisposed) return;
 
-        await this.hdriEnvironment.load('/textures/studio/fondo2.exr').catch((error) => {
+        await this.hdriEnvironment.load('/textures/studio/fondo10.ktx2').catch((error) => {
             console.error('Error cargando el HDRI:', error);
         });
         if (this.isDisposed) return;

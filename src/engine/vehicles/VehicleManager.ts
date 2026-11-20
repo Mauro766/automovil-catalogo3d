@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { Vehicle } from './Vehicle';
 import { VehicleCard2D } from './VehicleCard2D';
-import { VEHICLES_DATA } from './VehicleData';
 import type { VehicleData } from './VehicleData';
 
 export class VehicleManager {
@@ -11,18 +10,20 @@ export class VehicleManager {
     private active3DVehicle: Vehicle | null = null;
     private activeData: VehicleData | null = null;
     private radius = 5.8; // Autos más cerca de la cámara central (antes 8.5)
+    private readonly vehicles: readonly VehicleData[];
 
-    constructor(scene: THREE.Scene) {
+    constructor(scene: THREE.Scene, vehicles: readonly VehicleData[] = []) {
         this.scene = scene;
+        this.vehicles = vehicles;
         this.textureLoader = new THREE.TextureLoader();
     }
 
-    // Carga los 5 planos 2D a partir de las imágenes PNG optimizadas
+    // Carga los planos 2D a partir de las imágenes PNG del catálogo
     public async loadAll2D(): Promise<void> {
-        const total = VEHICLES_DATA.length;
+        const total = this.vehicles.length;
 
         for (let i = 0; i < total; i++) {
-            const data = VEHICLES_DATA[i];
+            const data = this.vehicles[i];
             const card = new VehicleCard2D(data);
             await card.load(this.textureLoader, i);
 

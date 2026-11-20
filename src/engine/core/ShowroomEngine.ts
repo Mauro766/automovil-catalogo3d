@@ -8,12 +8,15 @@ import { HDRIEnvironment } from '../environment/EnvironmentHdri';
 import { CameraController } from '../camera/CameraController';
 import { DragExperience } from '../experience/ScrollExperience';
 import { VehicleSelector } from '../experience/VehicleSelector';
+import { LiquidLoadingScreen } from '../experience/LiquidLoadingScreen';
+
 import { VehicleManager } from '../vehicles/VehicleManager';
+import type { VehicleData } from '../vehicles/VehicleData';
 
 export class ShowroomEngine {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
-    private renderer: THREE.WebGLRenderer | WebGPURenderer;
+    private renderer: WebGPURenderer;
     private container: HTMLElement;
     private resizeObserver: ResizeObserver;
 
@@ -22,23 +25,30 @@ export class ShowroomEngine {
     private hdriEnvironment: HDRIEnvironment;
 
     private vehicleManager: VehicleManager;
+
     private cameraController: CameraController | null = null;
     private dragExperience: DragExperience | null = null;
     private vehicleSelector: VehicleSelector | null = null;
 
+    private loadingScreen: LiquidLoadingScreen | null = null;
+
     private isRunning = false;
+    private isRevealed = false;
 
     private onVehicleChange: ((index: number) => void) | null = null;
     private onVehicleSelected: ((id: string) => void) | null = null;
 
-    constructor(container: HTMLElement) {
+    constructor(
+        container: HTMLElement,
+        vehicles: readonly VehicleData[]
+    ) {
         this.container = container;
 
-        // Crear escena
+        // Escena principal.
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0xf6f6f6);
 
-        // Crear cámara: posición central del showroom, mirando hacia los vehículos
+        // Cámara principal.
         this.camera = new THREE.PerspectiveCamera(
             55,
             1,
@@ -46,11 +56,10 @@ export class ShowroomEngine {
             1000
         );
 
-        // Posición inicial en el centro del showroom a altura de persona
         this.camera.position.set(0, 1.4, 0);
         this.camera.lookAt(5.8, 1.4, 0);
 
-        // Crear renderer con WebGPU y fallback automático a WebGL2 cuando corresponda
+        // Renderer WebGPU.
         this.renderer = new WebGPURenderer({
             antialias: true,
             alpha: false,
@@ -58,13 +67,16 @@ export class ShowroomEngine {
 
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.0;
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.setPixelRatio(
+            Math.min(window.devicePixelRatio, 2)
+        );
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-        if ('shadowMap' in this.renderer) {
-            this.renderer.shadowMap.enabled = true;
-            this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        }
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Necesario para renderizar dos escenas en el mismo frame.
+        this.renderer.autoClear = false;
 
         this.renderer.domElement.style.display = 'block';
         this.renderer.domElement.style.width = '100%';
@@ -73,98 +85,106 @@ export class ShowroomEngine {
 
         this.container.appendChild(this.renderer.domElement);
 
-        // Observar cambios de tamaño
+        // Resize observer.
         this.resizeObserver = new ResizeObserver(() => {
             this.resize();
         });
 
         this.resizeObserver.observe(this.container);
 
-        // Crear entorno
+        // Entorno.
         this.environment = new ShowroomEnvironment(this.scene);
 
-        // Crear iluminación
+        // Iluminación.
         this.lighting = new ShowroomLighting(this.scene);
 
-        // Crear HDRI
+        // HDRI.
         this.hdriEnvironment = new HDRIEnvironment(
             this.renderer,
             this.scene
         );
 
-        // Gestor de vehículos 2D y 3D bajo demanda
-        this.vehicleManager = new VehicleManager(this.scene);
+        // Vehículos.
+        this.vehicleManager = new VehicleManager(
+            this.scene,
+            vehicles
+        );
+
+        // Loader independiente.
+        this.loadingScreen = new LiquidLoadingScreen();
 
         this.resize();
     }
 
     public async initRenderer(): Promise<void> {
-        const hasInitialized = 'hasInitialized' in this.renderer && typeof this.renderer.hasInitialized === 'function'
-            ? this.renderer.hasInitialized()
-            : false;
-
-        if (this.renderer instanceof WebGPURenderer && !hasInitialized) {
-            await this.renderer.init();
-        }
-
-      
+        await this.renderer.init();
     }
 
-    // Inicializa la carga de los planos 2D optimizados
+    public async initEnvironment(): Promise<void> {
+        await this.hdriEnvironment.load(
+            '/textures/studio/fondo8.ktx2'
+        );
+    }
+
     public async initVehicles(): Promise<void> {
         await this.vehicleManager.loadAll2D();
     }
 
-    //number vehicle
-    public setOnVehicleChange(callback: (index: number) => void): void {
+    public setOnVehicleChange(
+        callback: (index: number) => void
+    ): void {
         this.onVehicleChange = callback;
     }
 
-    public setOnVehicleSelected(callback: (id: string) => void): void {
+    public setOnVehicleSelected(
+        callback: (id: string) => void
+    ): void {
         this.onVehicleSelected = callback;
     }
 
-    // Iniciar experiencia controlada por cursor drag
     public startExperience(): void {
         const cards = this.vehicleManager.getCards();
+
         if (cards.length === 0) {
-            console.error('No hay vehículos 2D cargados para iniciar la experiencia.');
+            console.error(
+                'No hay vehículos 2D cargados para iniciar la experiencia.'
+            );
             return;
         }
 
-        // Evitar crear más de una experiencia
         this.dragExperience?.dispose();
         this.vehicleSelector?.dispose();
 
         this.cameraController = new CameraController(this.camera);
 
-        // Crear selector de vehículos con Raycaster apuntando a los planos 2D
         this.vehicleSelector = new VehicleSelector(
             this.camera,
             this.renderer.domElement,
             cards
         );
 
-        // Crear experiencia de arrastre con cursor
         this.dragExperience = new DragExperience(
-    this.camera,
-    this.cameraController,
-    this.vehicleManager,
-    this.vehicleSelector
-);
+            this.camera,
+            this.cameraController,
+            this.vehicleManager,
+            this.vehicleSelector
+        );
 
-if (this.onVehicleChange) {
-    this.dragExperience.setOnVehicleChange(this.onVehicleChange);
-}
+        if (this.onVehicleChange) {
+            this.dragExperience.setOnVehicleChange(
+                this.onVehicleChange
+            );
+        }
 
-if (this.onVehicleSelected) {
-    this.dragExperience.setOnVehicleSelected(this.onVehicleSelected);
-}
+        if (this.onVehicleSelected) {
+            this.dragExperience.setOnVehicleSelected(
+                this.onVehicleSelected
+            );
+        }
 
-this.dragExperience.start();
+        this.dragExperience.start();
     }
 
-    // Actualizar dimensiones
     private resize(): void {
         const width = this.container.clientWidth;
         const height = this.container.clientHeight;
@@ -177,7 +197,16 @@ this.dragExperience.start();
         this.renderer.setSize(width, height);
     }
 
-    // Iniciar renderizado
+    public async revealLoadingScreen(): Promise<void> {
+        if (!this.loadingScreen || this.isRevealed) return;
+
+        this.isRevealed = true;
+        await this.loadingScreen.reveal();
+
+        this.loadingScreen.dispose();
+        this.loadingScreen = null;
+    }
+
     public start(): void {
         if (this.isRunning) return;
 
@@ -188,7 +217,6 @@ this.dragExperience.start();
         });
     }
 
-    // Detener renderizado
     public stop(): void {
         if (!this.isRunning) return;
 
@@ -196,9 +224,15 @@ this.dragExperience.start();
         this.renderer.setAnimationLoop(null);
     }
 
-    // Renderizar escena
     private render(): void {
+        // Limpiar una sola vez.
+        this.renderer.clear();
+
+        // Renderizar showroom.
         this.renderer.render(this.scene, this.camera);
+
+        // Renderizar loader por encima del showroom mientras exista.
+        this.loadingScreen?.render(this.renderer);
     }
 
     public getScene(): THREE.Scene {
@@ -209,7 +243,6 @@ this.dragExperience.start();
         return this.camera;
     }
 
-    // Liberar recursos
     public dispose(): void {
         this.stop();
 
@@ -226,6 +259,9 @@ this.dragExperience.start();
         this.environment.dispose();
         this.lighting.dispose();
         this.hdriEnvironment.dispose();
+
+        this.loadingScreen?.dispose();
+        this.loadingScreen = null;
 
         this.scene.clear();
 

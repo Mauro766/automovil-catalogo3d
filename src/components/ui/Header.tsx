@@ -1,6 +1,17 @@
+import type { MouseEvent } from 'react';
 import '../../styles/header.css';
 
-export default function Header() {
+interface HeaderProps {
+    onBack?: () => void;
+}
+
+export default function Header({ onBack }: HeaderProps = {}) {
+    const handleBack = (event: MouseEvent<HTMLAnchorElement>) => {
+        if (!onBack) return;
+        event.preventDefault();
+        onBack();
+    };
+
     return (
         <>
             <header className='header'>
@@ -9,8 +20,8 @@ export default function Header() {
                 </svg>
 
                 <nav className='nav'>
-                    <a href="">SHOWROOM</a>
-                    <a href="">CATALOG</a>
+                    <a href={onBack ? '/' : ''} onClick={onBack ? handleBack : undefined}>SHOWROOM</a>
+                    <a href={onBack ? '/' : ''} onClick={onBack ? handleBack : undefined}>CATALOG</a>
                     <svg width="93" height="2" viewBox="0 0 93 1" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M0 0.5H92.5" stroke="black" />
                     </svg>

@@ -21,7 +21,7 @@ export class VehicleCard2D {
     }
 
     public async load(textureLoader: THREE.TextureLoader, _index?: number): Promise<THREE.Group> {
-        this.texture = await textureLoader.loadAsync(this.data.imagePath);
+        this.texture = await textureLoader.loadAsync(this.data.showroomImage.url);
         this.texture.colorSpace = THREE.SRGBColorSpace;
         this.texture.generateMipmaps = true;
         this.texture.minFilter = THREE.LinearMipmapLinearFilter;

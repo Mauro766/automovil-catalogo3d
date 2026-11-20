@@ -69,7 +69,7 @@ export class CameraController {
         vehicle: Vehicle,
         aspect: number,
         angle: number,
-        margin = 1.2
+        margin = 0.7
     ): { target: THREE.Vector3; distance: number } | null {
         const model = vehicle.getModel();
         if (!model || aspect <= 0) return null;
