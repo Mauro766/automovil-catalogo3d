@@ -166,7 +166,7 @@ export function VehicleViewer({ vehicle, onBack }: VehicleViewerProps) {
                                 <line x1="19" y1="12" x2="5" y2="12" />
                                 <polyline points="12 19 5 12 12 5" />
                             </svg>
-                            <span>VOLVER AL CATÁLOGO</span>
+                            <span>RETURN TO CATALOG</span>
                         </button>
                     </div>
 
