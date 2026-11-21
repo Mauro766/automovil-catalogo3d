@@ -202,9 +202,14 @@ export class ShowroomEngine {
 
         this.isRevealed = true;
         await this.loadingScreen.reveal();
+    }
 
-        this.loadingScreen.dispose();
-        this.loadingScreen = null;
+    public async coverLoadingScreen(): Promise<void> {
+        if (!this.loadingScreen) {
+            this.loadingScreen = new LiquidLoadingScreen();
+        }
+        this.isRevealed = false;
+        await this.loadingScreen.cover();
     }
 
     public start(): void {

@@ -19,9 +19,13 @@ export function Showroom({
 }: ShowroomProps) {
     const sectionRef = useRef<HTMLElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const engineRef = useRef<ShowroomEngine | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRevealing, setIsRevealing] = useState(false);
+    const [isExiting, setIsExiting] = useState(false);
     const [loadingProgress, setLoadingProgress] = useState(0);
+
+    const isTransitioningRef = useRef(false);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -29,11 +33,26 @@ export function Showroom({
         if (!container) return;
 
         const engine = new ShowroomEngine(container, vehicles);
+        engineRef.current = engine;
 
         engine.setOnVehicleChange(onVehicleChange);
 
         if (onVehicleSelected) {
-            engine.setOnVehicleSelected(onVehicleSelected);
+            engine.setOnVehicleSelected(async (id: string) => {
+                if (isTransitioningRef.current) return;
+                isTransitioningRef.current = true;
+
+                // Transición líquida de salida: se activa z-index alto para tapar textos y Hero
+                setIsExiting(true);
+
+                try {
+                    await engine.coverLoadingScreen();
+                } catch (e) {
+                    console.error('Error durante la animación líquida de salida:', e);
+                }
+
+                onVehicleSelected(id);
+            });
         }
 
         let cancelled = false;
@@ -98,6 +117,7 @@ export function Showroom({
 
         return () => {
             cancelled = true;
+            engineRef.current = null;
             engine.dispose();
         };
     }, [vehicles, onVehicleChange, onVehicleSelected]);
@@ -112,7 +132,7 @@ export function Showroom({
                 height: '100%',
                 overflow: 'hidden',
                 userSelect: 'none',
-                zIndex: isLoading ? 200 : 0,
+                zIndex: isLoading || isExiting ? 200 : 0,
             }}
         >
             <div
@@ -126,11 +146,6 @@ export function Showroom({
 
             {isLoading && (
                 <div className={`loading-content ${isRevealing ? 'revealing' : ''}`}>
-                    <div className="loading-top">
-                        <span>DEALPUSH</span>
-                        <span>DIGITAL EXPERIENCES</span>
-                    </div>
-
                     <div className="loading-bottom">
                         <h1>01</h1>
 

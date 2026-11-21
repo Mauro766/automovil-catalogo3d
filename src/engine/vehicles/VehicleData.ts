@@ -14,6 +14,11 @@ export interface VehicleImage {
     order: number;
 }
 
+export interface VehiclePrice {
+    amount: number;
+    currency: 'USD' | 'ARS';
+}
+
 export interface VehicleData {
     id: string;
     name: string;
@@ -21,5 +26,6 @@ export interface VehicleData {
     specifications: VehicleSpecifications;
     showroomImage: VehicleImage;
     modelPath: string;
-    gallery: VehicleImage[];
+    images: VehicleImage[];
+    price: VehiclePrice | null;
 }

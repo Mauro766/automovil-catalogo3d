@@ -120,6 +120,9 @@ export class LiquidLoadingScreen {
         renderer.render(this.scene, this.camera);
     }
 
+    /**
+     * Sube el líquido revelando la escena (de pantalla negra a transparente).
+     */
     public reveal(): Promise<void> {
         if (this.isRevealing || this.isDisposed) {
             return Promise.resolve();
@@ -135,6 +138,32 @@ export class LiquidLoadingScreen {
                 overwrite: 'auto',
                 onComplete: () => {
                     this.mesh.visible = false;
+                    resolve();
+                },
+            });
+        });
+    }
+
+    /**
+     * Baja el líquido cubriendo la escena (de transparente a pantalla negra).
+     */
+    public cover(): Promise<void> {
+        if (this.isDisposed) {
+            return Promise.resolve();
+        }
+
+        gsap.killTweensOf(this.progress);
+        this.mesh.visible = true;
+        this.progress.value = 1;
+        this.isRevealing = false;
+
+        return new Promise((resolve) => {
+            gsap.to(this.progress, {
+                value: 0,
+                duration: 1.2,
+                ease: 'power2.inOut',
+                overwrite: 'auto',
+                onComplete: () => {
                     resolve();
                 },
             });

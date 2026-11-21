@@ -5,6 +5,7 @@ import { CameraController } from '../camera/CameraController';
 import { HDRIEnvironment } from '../environment/EnvironmentHdri';
 import { ShowroomLighting } from '../lighting/ShowroomLighting';
 import { VehicleManager } from '../vehicles/VehicleManager';
+import { LiquidLoadingScreen } from '../experience/LiquidLoadingScreen';
 import type { VehicleData } from '../vehicles/VehicleData';
 import type { Vehicle } from '../vehicles/Vehicle';
 
@@ -25,6 +26,7 @@ export class VehicleViewerEngine {
     private isDragging = false;
     private isRunning = false;
     private isDisposed = false;
+    private loadingScreen: LiquidLoadingScreen | null = null;
 
     private readonly onPointerDownBound = this.onPointerDown.bind(this);
     private readonly onPointerMoveBound = this.onPointerMove.bind(this);
@@ -40,6 +42,7 @@ export class VehicleViewerEngine {
         this.renderer.toneMappingExposure = 1.0;
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+        this.renderer.autoClear = false;
 
         if ('shadowMap' in this.renderer) {
             this.renderer.shadowMap.enabled = true;
@@ -58,6 +61,9 @@ export class VehicleViewerEngine {
         this.vehicleManager = new VehicleManager(this.scene);
         this.cameraController = new CameraController(this.camera);
 
+        // Pantalla líquida que arranca cubriendo la pantalla para el reveal
+        this.loadingScreen = new LiquidLoadingScreen();
+
         this.renderer.domElement.addEventListener('pointerdown', this.onPointerDownBound);
         this.renderer.domElement.addEventListener('pointermove', this.onPointerMoveBound);
         this.renderer.domElement.addEventListener('pointerup', this.onPointerUpBound);
@@ -74,6 +80,8 @@ export class VehicleViewerEngine {
         }
         if (this.isDisposed) return;
 
+        this.start();
+
         await this.hdriEnvironment.load('/textures/studio/fondo10.ktx2').catch((error) => {
             console.error('Error cargando el HDRI:', error);
         });
@@ -86,7 +94,19 @@ export class VehicleViewerEngine {
         }
 
         this.updateCameraFrame();
-        this.start();
+    }
+
+    public async revealLoadingScreen(): Promise<void> {
+        if (!this.loadingScreen) return;
+
+        await this.loadingScreen.reveal();
+    }
+
+    public async coverLoadingScreen(): Promise<void> {
+        if (!this.loadingScreen) {
+            this.loadingScreen = new LiquidLoadingScreen();
+        }
+        await this.loadingScreen.cover();
     }
 
     private updateCameraFrame(): void {
@@ -134,7 +154,11 @@ export class VehicleViewerEngine {
     private start(): void {
         if (this.isRunning || this.isDisposed) return;
         this.isRunning = true;
-        this.renderer.setAnimationLoop(() => this.renderer.render(this.scene, this.camera));
+        this.renderer.setAnimationLoop(() => {
+            this.renderer.clear();
+            this.renderer.render(this.scene, this.camera);
+            this.loadingScreen?.render(this.renderer);
+        });
     }
 
     public dispose(): void {
@@ -150,6 +174,8 @@ export class VehicleViewerEngine {
         this.vehicleManager.dispose();
         this.lighting.dispose();
         this.hdriEnvironment.dispose();
+        this.loadingScreen?.dispose();
+        this.loadingScreen = null;
         this.scene.clear();
         this.renderer.dispose();
 
